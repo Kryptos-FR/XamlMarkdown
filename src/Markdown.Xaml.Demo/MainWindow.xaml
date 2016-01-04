@@ -3,42 +3,8 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:markdown="http://schemas.kryptos-fr.github.io/xaml/markdown"
         Title="Markdown.Xaml Demo"
-        Height="600"
-        Width="800"
+        Width="1024" Height="768"
         Loaded="Window_Loaded_1">
-  <Window.Resources>
-
-    <Style TargetType="FlowDocument" x:Key="DocumentStyle">
-      <Setter Property="FontFamily" Value="Calibri" />
-      <Setter Property="TextAlignment" Value="Left" />
-    </Style>
-
-    <Style x:Key="PageHeader" TargetType="Paragraph">
-      <Setter Property="FontSize" Value="42" />
-      <Setter Property="Foreground" Value="#ff000000" />
-      <Setter Property="FontWeight" Value="Light" />
-    </Style>
-
-    <Style x:Key="SubHeader"
-               TargetType="Paragraph">
-      <Setter Property="FontSize" Value="20" />
-      <Setter Property="Foreground" Value="#ff000000" />
-      <Setter Property="FontWeight" Value="Light" />
-    </Style>
-
-    <Style x:Key="SubHeaderSecondary" TargetType="Paragraph">
-      <Setter Property="FontSize" Value="20" />
-      <Setter Property="Foreground" Value="#99000000" />
-      <Setter Property="FontWeight" Value="Light" />
-    </Style>
-
-    <markdown:XamlMarkdown x:Key="Markdown"
-                        DocumentStyle="{StaticResource DocumentStyle}"
-                        Heading1Style="{StaticResource PageHeader}"
-                        Heading2Style="{StaticResource SubHeader}"
-                        Heading3Style="{StaticResource SubHeaderSecondary}"/>
-  </Window.Resources>
-
   <Grid>
     <Grid.ColumnDefinitions>
       <ColumnDefinition Width="*" />
@@ -55,11 +21,11 @@
              Margin="5" 
              VerticalScrollBarVisibility="Auto"/>
 
-    <FlowDocumentScrollViewer Grid.Row="0"
-                              Grid.Column="1"
-                              VerticalAlignment="Stretch"
-                              HorizontalAlignment="Stretch"
-                              Margin="5"
-                              Document="{Binding ElementName=EditSource, Path=Text, Converter={markdown:TextToMarkdownFlowDocumentConverter}}" />
+    <markdown:MarkdownTextBlock Grid.Row="0"
+                                Grid.Column="1"
+                                VerticalAlignment="Stretch"
+                                HorizontalAlignment="Stretch"
+                                Margin="5"
+                                Text="{Binding ElementName=EditSource, Path=Text}" />
   </Grid>
 </Window>

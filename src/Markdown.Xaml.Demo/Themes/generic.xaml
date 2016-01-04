@@ -1,0 +1,41 @@
+﻿<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:markdown="http://schemas.kryptos-fr.github.io/xaml/markdown">
+  <Style TargetType="{x:Type Run}" x:Key="{x:Static markdown:XamlMarkdown.CodeStyleKey}">
+    <Setter Property="FontFamily" Value="Consolas" />
+  </Style>
+  
+  <Style TargetType="{x:Type FlowDocument}" x:Key="{x:Static markdown:XamlMarkdown.DocumentStyleKey}">
+    <Setter Property="FontFamily" Value="Calibri" />
+    <Setter Property="TextAlignment" Value="Left" />
+  </Style>
+
+  <Style TargetType="{x:Type Paragraph}" x:Key="{x:Static markdown:XamlMarkdown.Heading1StyleKey}">
+    <Setter Property="FontSize" Value="42" />
+    <Setter Property="Foreground" Value="#ff000000" />
+    <Setter Property="FontWeight" Value="Light" />
+  </Style>
+
+  <Style TargetType="{x:Type Paragraph}" x:Key="{x:Static markdown:XamlMarkdown.Heading2StyleKey}">
+    <Setter Property="FontSize" Value="20" />
+    <Setter Property="Foreground" Value="#ff000000" />
+    <Setter Property="FontWeight" Value="Light" />
+  </Style>
+
+  <Style TargetType="{x:Type Paragraph}" x:Key="{x:Static markdown:XamlMarkdown.Heading3StyleKey}">
+    <Setter Property="FontSize" Value="20" />
+    <Setter Property="Foreground" Value="#99000000" />
+    <Setter Property="FontWeight" Value="Light" />
+  </Style>
+  
+  <Style TargetType="{x:Type markdown:MarkdownTextBlock}">
+    <Setter Property="Template">
+      <Setter.Value>
+        <ControlTemplate TargetType="{x:Type markdown:MarkdownTextBlock}">
+          <FlowDocumentScrollViewer x:Name="PART_MessageContainer"
+                                      HorizontalScrollBarVisibility="Hidden" VerticalScrollBarVisibility="Auto" />
+        </ControlTemplate>
+      </Setter.Value>
+    </Setter>
+  </Style>
+</ResourceDictionary>
