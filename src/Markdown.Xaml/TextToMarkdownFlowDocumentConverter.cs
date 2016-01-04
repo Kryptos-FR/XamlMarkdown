@@ -1,26 +1,21 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Diagnostics.Contracts;
 using System.Globalization;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Data;
 
 namespace Markdown.Xaml
 {
-    public class TextToFlowDocumentConverter : DependencyObject, IValueConverter
+    public class TextToMarkdownFlowDocumentConverter : DependencyObject, IValueConverter
     {
-        public Markdown Markdown
+        public XamlMarkdown XamlMarkdown
         {
-            get { return (Markdown)GetValue(MarkdownProperty); }
-            set { SetValue(MarkdownProperty, value); }
+            get { return (XamlMarkdown)GetValue(XamlMarkdownProperty); }
+            set { SetValue(XamlMarkdownProperty, value); }
         }
 
         // Using a DependencyProperty as the backing store for Markdown.  This enables animation, styling, binding, etc...
-        public static readonly DependencyProperty MarkdownProperty =
-            DependencyProperty.Register("Markdown", typeof(Markdown), typeof(TextToFlowDocumentConverter), new PropertyMetadata(null));
+        public static readonly DependencyProperty XamlMarkdownProperty =
+            DependencyProperty.Register("XamlMarkdown", typeof(XamlMarkdown), typeof(TextToMarkdownFlowDocumentConverter), new PropertyMetadata(null));
 
         /// <summary>
         /// Converts a value. 
@@ -41,7 +36,7 @@ namespace Markdown.Xaml
 
             var text = (string)value;
 
-            var engine = Markdown ?? mMarkdown.Value;
+            var engine = XamlMarkdown ?? defaultMarkdown.Value;
 
             return engine.Transform(text);
         }
@@ -61,7 +56,6 @@ namespace Markdown.Xaml
             throw new NotImplementedException();
         }
 
-        private Lazy<Markdown> mMarkdown
-            = new Lazy<Markdown>(() => new Markdown());
+        private readonly Lazy<XamlMarkdown> defaultMarkdown = new Lazy<XamlMarkdown>(() => new XamlMarkdown());
     }
 }
