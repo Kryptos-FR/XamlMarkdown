@@ -1,7 +1,7 @@
 ﻿<Window x:Class="Markdown.Demo.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        xmlns:local="clr-namespace:Markdown.Xaml;assembly=Markdown.Xaml"
+        xmlns:markdown="http://schemas.kryptos-fr.github.io/xaml/markdown"
         Title="Markdown.Xaml Demo"
         Height="600"
         Width="800"
@@ -32,13 +32,11 @@
       <Setter Property="FontWeight" Value="Light" />
     </Style>
 
-    <local:XamlMarkdown x:Key="Markdown"
+    <markdown:XamlMarkdown x:Key="Markdown"
                         DocumentStyle="{StaticResource DocumentStyle}"
                         Heading1Style="{StaticResource PageHeader}"
                         Heading2Style="{StaticResource SubHeader}"
                         Heading3Style="{StaticResource SubHeaderSecondary}"/>
-
-    <local:TextToMarkdownFlowDocumentConverter x:Key="TextToFlowDocumentConverter" XamlMarkdown="{StaticResource Markdown}"/>
   </Window.Resources>
 
   <Grid>
@@ -62,6 +60,6 @@
                               VerticalAlignment="Stretch"
                               HorizontalAlignment="Stretch"
                               Margin="5"
-                              Document="{Binding ElementName=EditSource, Path=Text, Converter={StaticResource TextToFlowDocumentConverter}}" />
+                              Document="{Binding ElementName=EditSource, Path=Text, Converter={markdown:TextToMarkdownFlowDocumentConverter}}" />
   </Grid>
 </Window>

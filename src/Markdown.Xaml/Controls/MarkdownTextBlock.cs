@@ -3,7 +3,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Documents;
 
-namespace Markdown.Xaml
+namespace Markdown.Xaml.Controls
 {
     [TemplatePart(Name = MessageContainerPartName, Type = typeof(FlowDocumentScrollViewer))]
     public class MarkdownTextBlock : Control
