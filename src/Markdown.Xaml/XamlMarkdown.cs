@@ -10,23 +10,62 @@ using System.Windows.Shapes;
 
 namespace Markdown.Xaml
 {
-    public class XamlMarkdown : DependencyObject
+    public sealed class XamlMarkdown : DependencyObject
     {
         /// <summary>
         /// maximum nested depth of [] and () supported by the transform; implementation detail
         /// </summary>
-        private const int _nestDepth = 6;
-
+        private const int NestDepth = 6;
         /// <summary>
         /// Tabs are automatically converted to spaces as part of the transform  
         /// this constant determines how "wide" those tabs become in spaces  
         /// </summary>
-        private const int _tabWidth = 4;
+        private const int TabWidth = 4;
+        private const string MarkerUl = @"[*+-]";
+        private const string MarkerOl = @"\d+[.]";
+        private int listLevel;
 
-        private const string _markerUL = @"[*+-]";
-        private const string _markerOL = @"\d+[.]";
+        private Style codeStyle;
+        private Style documentStyle;
+        private Style heading1Style;
+        private Style heading2Style;
+        private Style heading3Style;
+        private Style heading4Style;
 
-        private int _listLevel;
+        public XamlMarkdown()
+        {
+            HyperlinkCommand = NavigationCommands.GoToPage;
+        }
+
+        /// <summary>
+        /// Resource Key for the CodeStyle.
+        /// </summary>
+        public static ComponentResourceKey CodeStyleKey { get; } = new ComponentResourceKey(typeof(XamlMarkdown), nameof(CodeStyleKey));
+
+        /// <summary>
+        /// Resource Key for the DocumentStyle.
+        /// </summary>
+        public static ComponentResourceKey DocumentStyleKey { get; } = new ComponentResourceKey(typeof(XamlMarkdown), nameof(DocumentStyleKey));
+
+        /// <summary>
+        /// Resource Key for the Heading1Style.
+        /// </summary>
+        public static ComponentResourceKey Heading1StyleKey { get; } = new ComponentResourceKey(typeof(XamlMarkdown), nameof(Heading1StyleKey));
+
+        /// <summary>
+        /// Resource Key for the Heading2Style.
+        /// </summary>
+        public static ComponentResourceKey Heading2StyleKey { get; } = new ComponentResourceKey(typeof(XamlMarkdown), nameof(Heading2StyleKey));
+
+        /// <summary>
+        /// Resource Key for the Heading3Style.
+        /// </summary>
+        public static ComponentResourceKey Heading3StyleKey { get; } = new ComponentResourceKey(typeof(XamlMarkdown), nameof(Heading3StyleKey));
+
+        /// <summary>
+        /// Resource Key for the Heading4Style.
+        /// </summary>
+        public static ComponentResourceKey Heading4StyleKey { get; } = new ComponentResourceKey(typeof(XamlMarkdown), nameof(Heading4StyleKey));
 
         /// <summary>
         /// when true, bold and italic require non-word characters on either side  
@@ -37,87 +76,27 @@ namespace Markdown.Xaml
 
         public ICommand HyperlinkCommand { get; set; }
 
-        public Style DocumentStyle
-        {
-            get { return (Style)GetValue(DocumentStyleProperty); }
-            set { SetValue(DocumentStyleProperty, value); }
-        }
+        private Style CodeStyle => codeStyle ?? (codeStyle = (Style)Application.Current.FindResource(CodeStyleKey));
 
-        // Using a DependencyProperty as the backing store for DocumentStyle.  This enables animation, styling, binding, etc...
-        public static readonly DependencyProperty DocumentStyleProperty =
-            DependencyProperty.Register("DocumentStyle", typeof(Style), typeof(XamlMarkdown), new PropertyMetadata(null));
+        private Style DocumentStyle => documentStyle ?? (documentStyle = (Style)Application.Current.FindResource(DocumentStyleKey));
 
-        public Style Heading1Style
-        {
-            get { return (Style)GetValue(Heading1StyleProperty); }
-            set { SetValue(Heading1StyleProperty, value); }
-        }
+        private Style Heading1Style => heading1Style ?? (heading1Style = (Style)Application.Current.FindResource(Heading1StyleKey));
 
-        // Using a DependencyProperty as the backing store for Heading1Style.  This enables animation, styling, binding, etc...
-        public static readonly DependencyProperty Heading1StyleProperty =
-            DependencyProperty.Register("Heading1Style", typeof(Style), typeof(XamlMarkdown), new PropertyMetadata(null));
+        private Style Heading2Style => heading2Style ?? (heading2Style = (Style)Application.Current.FindResource(Heading2StyleKey));
 
-        public Style Heading2Style
-        {
-            get { return (Style)GetValue(Heading2StyleProperty); }
-            set { SetValue(Heading2StyleProperty, value); }
-        }
+        private Style Heading3Style => heading3Style ?? (heading3Style = (Style)Application.Current.FindResource(Heading3StyleKey));
 
-        // Using a DependencyProperty as the backing store for Heading2Style.  This enables animation, styling, binding, etc...
-        public static readonly DependencyProperty Heading2StyleProperty =
-            DependencyProperty.Register("Heading2Style", typeof(Style), typeof(XamlMarkdown), new PropertyMetadata(null));
-
-        public Style Heading3Style
-        {
-            get { return (Style)GetValue(Heading3StyleProperty); }
-            set { SetValue(Heading3StyleProperty, value); }
-        }
-
-        // Using a DependencyProperty as the backing store for Heading3Style.  This enables animation, styling, binding, etc...
-        public static readonly DependencyProperty Heading3StyleProperty =
-            DependencyProperty.Register("Heading3Style", typeof(Style), typeof(XamlMarkdown), new PropertyMetadata(null));
-
-        public Style Heading4Style
-        {
-            get { return (Style)GetValue(Heading4StyleProperty); }
-            set { SetValue(Heading4StyleProperty, value); }
-        }
-
-        // Using a DependencyProperty as the backing store for Heading4Style.  This enables animation, styling, binding, etc...
-        public static readonly DependencyProperty Heading4StyleProperty =
-            DependencyProperty.Register("Heading4Style", typeof(Style), typeof(XamlMarkdown), new PropertyMetadata(null));
-
-
-
-        public Style CodeStyle
-        {
-            get { return (Style)GetValue(CodeStyleProperty); }
-            set { SetValue(CodeStyleProperty, value); }
-        }
-
-        // Using a DependencyProperty as the backing store for CodeStyle.  This enables animation, styling, binding, etc...
-        public static readonly DependencyProperty CodeStyleProperty =
-            DependencyProperty.Register("CodeStyle", typeof(Style), typeof(XamlMarkdown), new PropertyMetadata(null));
-
-
-
-
-        public XamlMarkdown()
-        {
-            HyperlinkCommand = NavigationCommands.GoToPage;
-        }
+        private Style Heading4Style => heading4Style ?? (heading4Style = (Style)Application.Current.FindResource(Heading4StyleKey));
 
         public FlowDocument Transform(string text)
         {
-            if (text == null)
-            {
-                throw new ArgumentNullException("text");
-            }
+            if (text == null) throw new ArgumentNullException(nameof(text));
 
             text = Normalize(text);
             var document = Create<FlowDocument, Block>(RunBlockGamut(text));
 
-            document.PagePadding = new Thickness(0);
+            // FIXME: was in the original file, but we are setting it in our style. Commented for now, could be removed later.
+            //document.PagePadding = new Thickness(0);
             if (DocumentStyle != null)
             {
                 document.Style = DocumentStyle;
@@ -131,15 +110,12 @@ namespace Markdown.Xaml
         /// </summary>
         private IEnumerable<Block> RunBlockGamut(string text)
         {
-            if (text == null)
-            {
-                throw new ArgumentNullException("text");
-            }
+            if (text == null) throw new ArgumentNullException(nameof(text));
 
             return DoHeaders(text,
                 s1 => DoHorizontalRules(s1,
                     s2 => DoLists(s2,
-                    sn => FormParagraphs(sn))));
+                    FormParagraphs)));
 
             //text = DoCodeBlocks(text);
             //text = DoBlockQuotes(text);
@@ -160,15 +136,12 @@ namespace Markdown.Xaml
         /// </summary>
         private IEnumerable<Inline> RunSpanGamut(string text)
         {
-            if (text == null)
-            {
-                throw new ArgumentNullException("text");
-            }
+            if (text == null) throw new ArgumentNullException(nameof(text));
 
             return DoCodeSpans(text,
                 s0 => DoAnchors(s0,
                 s1 => DoItalicsAndBold(s1,
-                s2 => DoText(s2))));
+                DoText)));
 
             //text = EscapeSpecialCharsWithinTagAttributes(text);
             //text = EscapeBackslashes(text);
@@ -188,22 +161,19 @@ namespace Markdown.Xaml
             //return text;
         }
 
-        private static Regex _newlinesLeadingTrailing = new Regex(@"^\n+|\n+\z", RegexOptions.Compiled);
-        private static Regex _newlinesMultiple = new Regex(@"\n{2,}", RegexOptions.Compiled);
-        private static Regex _leadingWhitespace = new Regex(@"^[ ]*", RegexOptions.Compiled);
+        private static readonly Regex NewlinesLeadingTrailing = new Regex(@"^\n+|\n+\z", RegexOptions.Compiled);
+        private static readonly Regex NewlinesMultiple = new Regex(@"\n{2,}", RegexOptions.Compiled);
+        private static Regex leadingWhitespace = new Regex(@"^[ ]*", RegexOptions.Compiled);
 
         /// <summary>
         /// splits on two or more newlines, to form "paragraphs";    
         /// </summary>
         private IEnumerable<Block> FormParagraphs(string text)
         {
-            if (text == null)
-            {
-                throw new ArgumentNullException("text");
-            }
+            if (text == null) throw new ArgumentNullException(nameof(text));
 
             // split on two or more newlines
-            string[] grafs = _newlinesMultiple.Split(_newlinesLeadingTrailing.Replace(text, ""));
+            var grafs = NewlinesMultiple.Split(NewlinesLeadingTrailing.Replace(text, ""));
 
             foreach (var g in grafs)
             {
@@ -211,7 +181,7 @@ namespace Markdown.Xaml
             }
         }
 
-        private static string _nestedBracketsPattern;
+        private static string nestedBracketsPattern;
 
         /// <summary>
         /// Reusable pattern to match balanced [brackets]. See Friedl's 
@@ -221,21 +191,21 @@ namespace Markdown.Xaml
         {
             // in other words [this] and [this[also]] and [this[also[too]]]
             // up to _nestDepth
-            if (_nestedBracketsPattern == null)
-                _nestedBracketsPattern =
+            if (nestedBracketsPattern == null)
+                nestedBracketsPattern =
                     RepeatString(@"
                     (?>              # Atomic matching
                        [^\[\]]+      # Anything other than brackets
                      |
                        \[
-                           ", _nestDepth) + RepeatString(
+                           ", NestDepth) + RepeatString(
                     @" \]
                     )*"
-                    , _nestDepth);
-            return _nestedBracketsPattern;
+                    , NestDepth);
+            return nestedBracketsPattern;
         }
 
-        private static string _nestedParensPattern;
+        private static string nestedParensPattern;
 
         /// <summary>
         /// Reusable pattern to match balanced (parens). See Friedl's 
@@ -245,21 +215,21 @@ namespace Markdown.Xaml
         {
             // in other words (this) and (this(also)) and (this(also(too)))
             // up to _nestDepth
-            if (_nestedParensPattern == null)
-                _nestedParensPattern =
+            if (nestedParensPattern == null)
+                nestedParensPattern =
                     RepeatString(@"
                     (?>              # Atomic matching
                        [^()\s]+      # Anything other than parens or whitespace
                      |
                        \(
-                           ", _nestDepth) + RepeatString(
+                           ", NestDepth) + RepeatString(
                     @" \)
                     )*"
-                    , _nestDepth);
-            return _nestedParensPattern;
+                    , NestDepth);
+            return nestedParensPattern;
         }
 
-        private static Regex _anchorInline = new Regex(string.Format(@"
+        private static readonly Regex AnchorInline = new Regex(string.Format(@"
                 (                           # wrap whole match in $1
                     \[
                         ({0})               # link text = $2
@@ -286,33 +256,27 @@ namespace Markdown.Xaml
         /// </remarks>
         private IEnumerable<Inline> DoAnchors(string text, Func<string, IEnumerable<Inline>> defaultHandler)
         {
-            if (text == null)
-            {
-                throw new ArgumentNullException("text");
-            }
+            if (text == null) throw new ArgumentNullException(nameof(text));
 
             // Next, inline-style links: [link text](url "optional title") or [link text](url "optional title")
-            return Evaluate(text, _anchorInline, AnchorInlineEvaluator, defaultHandler);
+            return Evaluate(text, AnchorInline, AnchorInlineEvaluator, defaultHandler);
         }
 
         private Inline AnchorInlineEvaluator(Match match)
         {
-            if (match == null)
-            {
-                throw new ArgumentNullException("match");
-            }
+            if (match == null) throw new ArgumentNullException(nameof(match));
 
-            string linkText = match.Groups[2].Value;
-            string url = match.Groups[3].Value;
-            string title = match.Groups[6].Value;
+            var linkText = match.Groups[2].Value;
+            var url = match.Groups[3].Value;
+            var title = match.Groups[6].Value;
 
             var result = Create<Hyperlink, Inline>(RunSpanGamut(linkText));
-            result.Command = HyperlinkCommand;
             result.CommandParameter = url;
+            result.Command = HyperlinkCommand;
             return result;
         }
 
-        private static Regex _headerSetext = new Regex(@"
+        private static readonly Regex HeaderSetext = new Regex(@"
                 ^(.+?)
                 [ ]*
                 \n
@@ -321,7 +285,7 @@ namespace Markdown.Xaml
                 \n+",
     RegexOptions.Multiline | RegexOptions.IgnorePatternWhitespace | RegexOptions.Compiled);
 
-        private static Regex _headerAtx = new Regex(@"
+        private static readonly Regex HeaderAtx = new Regex(@"
                 ^(\#{1,6})  # $1 = string of #'s
                 [ ]*
                 (.+?)       # $2 = Header text
@@ -348,24 +312,18 @@ namespace Markdown.Xaml
         /// </remarks>
         private IEnumerable<Block> DoHeaders(string text, Func<string, IEnumerable<Block>> defaultHandler)
         {
-            if (text == null)
-            {
-                throw new ArgumentNullException("text");
-            }
+            if (text == null) throw new ArgumentNullException(nameof(text));
 
-            return Evaluate<Block>(text, _headerSetext, m => SetextHeaderEvaluator(m),
-                s => Evaluate<Block>(s, _headerAtx, m => AtxHeaderEvaluator(m), defaultHandler));
+            return Evaluate(text, HeaderSetext, SetextHeaderEvaluator,
+                s => Evaluate(s, HeaderAtx, AtxHeaderEvaluator, defaultHandler));
         }
 
         private Block SetextHeaderEvaluator(Match match)
         {
-            if (match == null)
-            {
-                throw new ArgumentNullException("match");
-            }
+            if (match == null) throw new ArgumentNullException(nameof(match));
 
-            string header = match.Groups[1].Value;
-            int level = match.Groups[2].Value.StartsWith("=") ? 1 : 2;
+            var header = match.Groups[1].Value;
+            var level = match.Groups[2].Value.StartsWith("=") ? 1 : 2;
 
             //TODO: Style the paragraph based on the header level
             return CreateHeader(level, RunSpanGamut(header.Trim()));
@@ -374,21 +332,16 @@ namespace Markdown.Xaml
         private Block AtxHeaderEvaluator(Match match)
         {
             if (match == null)
-            {
-                throw new ArgumentNullException("match");
-            }
+                throw new ArgumentNullException(nameof(match));
 
-            string header = match.Groups[2].Value;
-            int level = match.Groups[1].Value.Length;
+            var header = match.Groups[2].Value;
+            var level = match.Groups[1].Value.Length;
             return CreateHeader(level, RunSpanGamut(header));
         }
 
         public Block CreateHeader(int level, IEnumerable<Inline> content)
         {
-            if (content == null)
-            {
-                throw new ArgumentNullException("content");
-            }
+            if (content == null) throw new ArgumentNullException(nameof(content));
 
             var block = Create<Paragraph, Inline>(content);
 
@@ -426,7 +379,7 @@ namespace Markdown.Xaml
             return block;
         }
 
-        private static Regex _horizontalRules = new Regex(@"
+        private static readonly Regex HorizontalRules = new Regex(@"
             ^[ ]{0,3}         # Leading space
                 ([-*_])       # $1: First marker
                 (?>           # Repeated marker group
@@ -448,27 +401,22 @@ namespace Markdown.Xaml
         /// </remarks>
         private IEnumerable<Block> DoHorizontalRules(string text, Func<string, IEnumerable<Block>> defaultHandler)
         {
-            if (text == null)
-            {
-                throw new ArgumentNullException("text");
-            }
+            if (text == null) throw new ArgumentNullException(nameof(text));
 
-            return Evaluate(text, _horizontalRules, RuleEvaluator, defaultHandler);
+            return Evaluate(text, HorizontalRules, RuleEvaluator, defaultHandler);
         }
 
         private Block RuleEvaluator(Match match)
         {
             if (match == null)
-            {
-                throw new ArgumentNullException("match");
-            }
+                throw new ArgumentNullException(nameof(match));
 
             var line = new Line() { X2 = 1, StrokeThickness = 1.0 };
             var container = new BlockUIContainer(line);
             return container;
         }
 
-        private static string _wholeList = string.Format(@"
+        private static readonly string WholeList = string.Format(@"
             (                               # $1 = whole list
               (                             # $2
                 [ ]{{0,{1}}}
@@ -486,12 +434,12 @@ namespace Markdown.Xaml
                     {0}[ ]+
                   )
               )
-            )", string.Format("(?:{0}|{1})", _markerUL, _markerOL), _tabWidth - 1);
+            )", $"(?:{MarkerUl}|{MarkerOl})", TabWidth - 1);
 
-        private static Regex _listNested = new Regex(@"^" + _wholeList,
+        private static readonly Regex ListNested = new Regex(@"^" + WholeList,
             RegexOptions.Multiline | RegexOptions.IgnorePatternWhitespace | RegexOptions.Compiled);
 
-        private static Regex _listTopLevel = new Regex(@"(?:(?<=\n\n)|\A\n?)" + _wholeList,
+        private static readonly Regex ListTopLevel = new Regex(@"(?:(?<=\n\n)|\A\n?)" + WholeList,
             RegexOptions.Multiline | RegexOptions.IgnorePatternWhitespace | RegexOptions.Compiled);
 
         /// <summary>
@@ -500,33 +448,25 @@ namespace Markdown.Xaml
         private IEnumerable<Block> DoLists(string text, Func<string, IEnumerable<Block>> defaultHandler)
         {
             if (text == null)
-            {
-                throw new ArgumentNullException("text");
-            }
+                throw new ArgumentNullException(nameof(text));
 
             // We use a different prefix before nested lists than top-level lists.
             // See extended comment in _ProcessListItems().
-            if (_listLevel > 0)
-                return Evaluate(text, _listNested, ListEvaluator, defaultHandler);
-            else
-                return Evaluate(text, _listTopLevel, ListEvaluator, defaultHandler);
+            return Evaluate(text, listLevel > 0 ? ListNested : ListTopLevel, ListEvaluator, defaultHandler);
         }
 
         private Block ListEvaluator(Match match)
         {
-            if (match == null)
-            {
-                throw new ArgumentNullException("match");
-            }
+            if (match == null) throw new ArgumentNullException(nameof(match));
 
-            string list = match.Groups[1].Value;
-            string listType = Regex.IsMatch(match.Groups[3].Value, _markerUL) ? "ul" : "ol";
+            var list = match.Groups[1].Value;
+            var listType = Regex.IsMatch(match.Groups[3].Value, MarkerUl) ? "ul" : "ol";
 
             // Turn double returns into triple returns, so that we can make a
             // paragraph for the last item in a list, if necessary:
             list = Regex.Replace(list, @"\n{2,}", "\n\n\n");
 
-            var resultList = Create<List, ListItem>(ProcessListItems(list, listType == "ul" ? _markerUL : _markerOL));
+            var resultList = Create<List, ListItem>(ProcessListItems(list, listType == "ul" ? MarkerUl : MarkerOl));
 
             resultList.MarkerStyle = listType == "ul" ? TextMarkerStyle.Disc : TextMarkerStyle.Decimal;
 
@@ -560,13 +500,13 @@ namespace Markdown.Xaml
             // change the syntax rules such that sub-lists must start with a
             // starting cardinal number; e.g. "1." or "a.".
 
-            _listLevel++;
+            listLevel++;
             try
             {
                 // Trim trailing blank lines:
                 list = Regex.Replace(list, @"\n{2,}\z", "\n");
 
-                string pattern = string.Format(
+                var pattern = string.Format(
                   @"(\n)?                      # leading line = $1
                 (^[ ]*)                    # leading whitespace = $2
                 ({0}) [ ]+                 # list marker = $3
@@ -583,19 +523,16 @@ namespace Markdown.Xaml
             }
             finally
             {
-                _listLevel--;
+                listLevel--;
             }
         }
 
         private ListItem ListItemEvaluator(Match match)
         {
-            if (match == null)
-            {
-                throw new ArgumentNullException("match");
-            }
+            if (match == null) throw new ArgumentNullException(nameof(match));
 
-            string item = match.Groups[4].Value;
-            string leadingLine = match.Groups[1].Value;
+            var item = match.Groups[4].Value;
+            var leadingLine = match.Groups[1].Value;
 
             if (!String.IsNullOrEmpty(leadingLine) || Regex.IsMatch(item, @"\n{2,}"))
                 // we could correct any bad indentation here..
@@ -607,7 +544,7 @@ namespace Markdown.Xaml
             }
         }
 
-        private static Regex _codeSpan = new Regex(@"
+        private static readonly Regex CodeSpan = new Regex(@"
                     (?<!\\)   # Character before opening ` can't be a backslash
                     (`+)      # $1 = Opening run of `
                     (.+?)     # $2 = The code block
@@ -620,10 +557,7 @@ namespace Markdown.Xaml
         /// </summary>
         private IEnumerable<Inline> DoCodeSpans(string text, Func<string, IEnumerable<Inline>> defaultHandler)
         {
-            if (text == null)
-            {
-                throw new ArgumentNullException("text");
-            }
+            if (text == null) throw new ArgumentNullException(nameof(text));
 
             //    * You can use multiple backticks as the delimiters if you want to
             //        include literal backticks in the code span. So, this input:
@@ -647,17 +581,14 @@ namespace Markdown.Xaml
             //          ... type <code>`bar`</code> ...         
             //
 
-            return Evaluate(text, _codeSpan, CodeSpanEvaluator, defaultHandler);
+            return Evaluate(text, CodeSpan, CodeSpanEvaluator, defaultHandler);
         }
 
         private Inline CodeSpanEvaluator(Match match)
         {
-            if (match == null)
-            {
-                throw new ArgumentNullException("match");
-            }
+            if (match == null) throw new ArgumentNullException(nameof(match));
 
-            string span = match.Groups[2].Value;
+            var span = match.Groups[2].Value;
             span = Regex.Replace(span, @"^[ ]*", ""); // leading whitespace
             span = Regex.Replace(span, @"[ ]*$", ""); // trailing whitespace
 
@@ -670,14 +601,14 @@ namespace Markdown.Xaml
             return result;
         }
 
-        private static Regex _bold = new Regex(@"(\*\*|__) (?=\S) (.+?[*_]*) (?<=\S) \1",
+        private static readonly Regex Bold = new Regex(@"(\*\*|__) (?=\S) (.+?[*_]*) (?<=\S) \1",
             RegexOptions.IgnorePatternWhitespace | RegexOptions.Singleline | RegexOptions.Compiled);
-        private static Regex _strictBold = new Regex(@"([\W_]|^) (\*\*|__) (?=\S) ([^\r]*?\S[\*_]*) \2 ([\W_]|$)",
+        private static readonly Regex StrictBold = new Regex(@"([\W_]|^) (\*\*|__) (?=\S) ([^\r]*?\S[\*_]*) \2 ([\W_]|$)",
             RegexOptions.IgnorePatternWhitespace | RegexOptions.Singleline | RegexOptions.Compiled);
 
-        private static Regex _italic = new Regex(@"(\*|_) (?=\S) (.+?) (?<=\S) \1",
+        private static readonly Regex Italic = new Regex(@"(\*|_) (?=\S) (.+?) (?<=\S) \1",
             RegexOptions.IgnorePatternWhitespace | RegexOptions.Singleline | RegexOptions.Compiled);
-        private static Regex _strictItalic = new Regex(@"([\W_]|^) (\*|_) (?=\S) ([^\r\*_]*?\S) \2 ([\W_]|$)",
+        private static readonly Regex StrictItalic = new Regex(@"([\W_]|^) (\*|_) (?=\S) ([^\r\*_]*?\S) \2 ([\W_]|$)",
             RegexOptions.IgnorePatternWhitespace | RegexOptions.Singleline | RegexOptions.Compiled);
 
         /// <summary>
@@ -685,32 +616,26 @@ namespace Markdown.Xaml
         /// </summary>
         private IEnumerable<Inline> DoItalicsAndBold(string text, Func<string, IEnumerable<Inline>> defaultHandler)
         {
-            if (text == null)
-            {
-                throw new ArgumentNullException("text");
-            }
+            if (text == null) throw new ArgumentNullException(nameof(text));
 
             // <strong> must go first, then <em>
             if (StrictBoldItalic)
             {
-                return Evaluate<Inline>(text, _strictBold, m => BoldEvaluator(m, 3),
-                    s1 => Evaluate<Inline>(s1, _strictItalic, m => ItalicEvaluator(m, 3),
-                    s2 => defaultHandler(s2)));
+                return Evaluate(text, StrictBold, m => BoldEvaluator(m, 3),
+                    s1 => Evaluate(s1, StrictItalic, m => ItalicEvaluator(m, 3),
+                    defaultHandler));
             }
             else
             {
-                return Evaluate<Inline>(text, _bold, m => BoldEvaluator(m, 2),
-                   s1 => Evaluate<Inline>(s1, _italic, m => ItalicEvaluator(m, 2),
-                   s2 => defaultHandler(s2)));
+                return Evaluate(text, Bold, m => BoldEvaluator(m, 2),
+                   s1 => Evaluate(s1, Italic, m => ItalicEvaluator(m, 2),
+                   defaultHandler));
             }
         }
 
         private Inline ItalicEvaluator(Match match, int contentGroup)
         {
-            if (match == null)
-            {
-                throw new ArgumentNullException("match");
-            }
+            if (match == null) throw new ArgumentNullException(nameof(match));
 
             var content = match.Groups[contentGroup].Value;
             return Create<Italic, Inline>(RunSpanGamut(content));
@@ -718,23 +643,20 @@ namespace Markdown.Xaml
 
         private Inline BoldEvaluator(Match match, int contentGroup)
         {
-            if (match == null)
-            {
-                throw new ArgumentNullException("match");
-            }
+            if (match == null) throw new ArgumentNullException(nameof(match));
 
             var content = match.Groups[contentGroup].Value;
             return Create<Bold, Inline>(RunSpanGamut(content));
         }
 
-        private static Regex _outDent = new Regex(@"^[ ]{1," + _tabWidth + @"}", RegexOptions.Multiline | RegexOptions.Compiled);
+        private static readonly Regex OutDent = new Regex(@"^[ ]{1," + TabWidth + @"}", RegexOptions.Multiline | RegexOptions.Compiled);
 
         /// <summary>
         /// Remove one level of line-leading spaces
         /// </summary>
         private string Outdent(string block)
         {
-            return _outDent.Replace(block, "");
+            return OutDent.Replace(block, "");
         }
 
         /// <summary>
@@ -745,16 +667,13 @@ namespace Markdown.Xaml
         /// </summary>
         private string Normalize(string text)
         {
-            if (text == null)
-            {
-                throw new ArgumentNullException("text");
-            }
+            if (text == null) throw new ArgumentNullException(nameof(text));
 
             var output = new StringBuilder(text.Length);
             var line = new StringBuilder();
-            bool valid = false;
+            var valid = false;
 
-            for (int i = 0; i < text.Length; i++)
+            for (var i = 0; i < text.Length; i++)
             {
                 switch (text[i])
                 {
@@ -776,8 +695,8 @@ namespace Markdown.Xaml
                         }
                         break;
                     case '\t':
-                        int width = (_tabWidth - line.Length % _tabWidth);
-                        for (int k = 0; k < width; k++)
+                        var width = (TabWidth - line.Length % TabWidth);
+                        for (var k = 0; k < width; k++)
                             line.Append(' ');
                         break;
                     case '\x1A':
@@ -803,13 +722,10 @@ namespace Markdown.Xaml
         /// </summary>
         private static string RepeatString(string text, int count)
         {
-            if (text == null)
-            {
-                throw new ArgumentNullException("text");
-            }
+            if (text == null) throw new ArgumentNullException(nameof(text));
 
             var sb = new StringBuilder(text.Length * count);
-            for (int i = 0; i < count; i++)
+            for (var i = 0; i < count; i++)
                 sb.Append(text);
             return sb.ToString();
         }
@@ -828,10 +744,7 @@ namespace Markdown.Xaml
 
         private IEnumerable<T> Evaluate<T>(string text, Regex expression, Func<Match, T> build, Func<string, IEnumerable<T>> rest)
         {
-            if (text == null)
-            {
-                throw new ArgumentNullException("text");
-            }
+            if (text == null) throw new ArgumentNullException(nameof(text));
 
             var matches = expression.Matches(text);
             var index = 0;
@@ -861,16 +774,13 @@ namespace Markdown.Xaml
             }
         }
 
-        private static Regex _eoln = new Regex("\\s+");
+        private static readonly Regex Eoln = new Regex("\\s+");
 
         public IEnumerable<Inline> DoText(string text)
         {
-            if (text == null)
-            {
-                throw new ArgumentNullException("text");
-            }
+            if (text == null) throw new ArgumentNullException(nameof(text));
 
-            var t = _eoln.Replace(text, " ");
+            var t = Eoln.Replace(text, " ");
             yield return new Run(t);
         }
     }
