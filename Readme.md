@@ -1,3 +1,6 @@
+This repository is a fork of https://github.com/theunrepentantgeek/Markdown.XAML with several improvements such as support for images and better styling capabilities.
+The original README file is reproduced below.
+
 # Markdown XAML
 
 Markdown XAML is a port of the popular 
@@ -51,3 +54,4 @@ possible.
 ## License
 
 Markdown XAML is licensed under the MIT license.
+https://opensource.org/licenses/MIT
